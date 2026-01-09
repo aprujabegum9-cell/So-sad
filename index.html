@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Push Notification - Khida Lagsa</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding-top: 50px; 
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        button { 
+            padding: 12px 25px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            background-color: #ff4757; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            transition: 0.3s;
+        }
+        button:hover { background-color: #e84118; }
+        #token-display { 
+            word-break: break-all; 
+            margin-top: 20px; 
+            color: #2f3542; 
+            font-size: 14px;
+            background: #f1f2f6;
+            padding: 10px;
+            border-radius: 5px;
+            display: none; /* শুরুতে লুকানো থাকবে */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Firebase Web Push</h1>
+        <p>নিচের বাটনে ক্লিক করে নোটিফিকেশন পারমিশন দিন:</p>
+        <button onclick="enableNotifications()">Enable Notification</button>
+        
+        <div id="token-display" id="tokenText"></div>
+    </div>
+
+    <!-- Firebase SDKs (Version 8 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+
+    <script>
+        // ১. আপনার Firebase কনফিগারেশন
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsPnR7m8KlAAiPbJ-NsY44VOUJvOxM_Nw",
+            authDomain: "khida-lagsa.firebaseapp.com",
+            projectId: "khida-lagsa",
+            storageBucket: "khida-lagsa.firebasestorage.app",
+            messagingSenderId: "352833727932",
+            appId: "1:352833727932:web:4ab72beeae51d6ad918fb9"
+        };
+
+        // Firebase ইনিশিয়ালাইজ করা
+        firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+
+        function enableNotifications() {
+            // নোটিফিকেশন পারমিশন চাওয়া
+            Notification.requestPermission().then((permission) => {
+                if (permission === 'granted') {
+                    console.log('পারমিশন পাওয়া গেছে!');
+                    
+                    // ২. GitHub Pages-এর জন্য সার্ভিস ওয়ার্কার নির্দিষ্ট পাথে রেজিস্টার করা
+                    // আপনার রিপোজিটরি নাম 'Sound-check' তাই এখানে সেটি যোগ করা হয়েছে
+                    navigator.serviceWorker.register('/Sound-check/firebase-messaging-sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker রেজিস্টার হয়েছে:', registration);
+
+                        // ৩. টোকেন সংগ্রহ করা
+                        messaging.getToken({ 
+                            vapidKey: 'BBHd15Z38gaZmDfmTyMe53vgutmFfMZwVCVBwf1ncKxsxC4-XTNJLa7Lu1hYXxNLWVz_odOSCcRsC-d1EvZDtjs',
+                            serviceWorkerRegistration: registration 
+                        })
+                        .then((currentToken) => {
+                            if (currentToken) {
+                                console.log("আপনার টোকেন:", currentToken);
+                                const display = document.getElementById('token-display');
+                                display.style.display = "block";
+                                display.innerText = "টোকেন পাওয়া গেছে! (কনসোল চেক করুন)";
+                                alert("সফল হয়েছে! টোকেন জেনারেট হয়েছে।");
+                            } else {
+                                alert('টোকেন পাওয়া যায়নি। পারমিশন চেক করুন।');
+                            }
+                        }).catch((err) => {
+                            console.log('টোকেন নিতে সমস্যা:', err);
+                            alert("Token Error: " + err.message);
+                        });
+
+                    }).catch((err) => {
+                        console.log('Service Worker রেজিস্টার করতে ব্যর্থ:', err);
+                        alert("SW Registration Error: " + err.message);
+                    });
+
+                } else {
+                    alert('আপনি নোটিফিকেশন পারমিশন ব্লক করেছেন।');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
